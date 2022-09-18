@@ -6,7 +6,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
-
 #define BUFF_SIZE 1024
 
 int main(void)
@@ -29,7 +28,6 @@ int main(void)
 	server_addr.sin_family = AF_INET;  //地址的域，相当于地址的类型, AF_UNIX表示地址位于UNIX系统内部
 	server_addr.sin_addr.s_addr = INADDR_ANY;  //inet_addr("10.10.0.9");
 	server_addr.sin_port = htons(9000);
-
 	// 绑定该套接字，使得该套接字和对应的系统套接字文件关联起来。
 	ret = bind(server_sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 	if (ret == -1) {
