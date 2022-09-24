@@ -1,4 +1,4 @@
-﻿#include "globals.h"
+#include "globals.h"
 #include <sys/epoll.h>
 
 #define MAX_EVENTS	256	/* 一次处理的最大的事件 */
@@ -30,8 +30,6 @@ epolltype_atoi(int x)
 
 void do_epoll_init(int max_fd)
 {
-
-    
     kdpfd = epoll_create(max_fd);
     if (kdpfd < 0)
 	  fprintf(stderr,"do_epoll_init: epoll_create(): %s\n", xstrerror());
@@ -71,15 +69,16 @@ void epollSetEvents(int fd, int need_read, int need_write)
     if (need_write)
 	ev.events |= EPOLLOUT;
 
+	//如果有设置成读或写的话，同时设置另外两个
     if (ev.events)
 	ev.events |= EPOLLHUP | EPOLLERR;
 
     if (ev.events != epoll_state[fd]) {
 	/* If the struct is already in epoll MOD or DEL, else ADD */
 	if (!ev.events) {
-	    epoll_ctl_type = EPOLL_CTL_DEL;
+	    epoll_ctl_type = EPOLL_CTL_DEL;//干掉，删除
 	} else if (epoll_state[fd]) {
-	    epoll_ctl_type = EPOLL_CTL_MOD;
+	    epoll_ctl_type = EPOLL_CTL_MOD;//如果以前有就改变（MOD）
 	} else {
 	    epoll_ctl_type = EPOLL_CTL_ADD;
 	}
@@ -93,7 +92,7 @@ void epollSetEvents(int fd, int need_read, int need_write)
 	}
 	switch (epoll_ctl_type) {
 	case EPOLL_CTL_ADD:
-	    epoll_fds++;
+	    epoll_fds++;//epoll_fds就是epoll监听fd的总数
 	    break;
 	case EPOLL_CTL_DEL:
 	    epoll_fds--;
@@ -104,6 +103,7 @@ void epollSetEvents(int fd, int need_read, int need_write)
     }
 }
 
+//其实就是调用epoll_wait
 int do_epoll_select(int msec)
 {
     int i;
@@ -119,20 +119,23 @@ int do_epoll_select(int msec)
     */
     num = epoll_wait(kdpfd, events, MAX_EVENTS, msec);
     if (num < 0) {
-	getCurrentTime();
-	if (ignoreErrno(errno))
-	    return COMM_OK;
+		getCurrentTime();
+		//是不是可以忽略
+		if (ignoreErrno(errno))
+	    	return COMM_OK;
 
-	debug(5, 1) ("comm_select: epoll failure: %s\n", xstrerror());
-	return COMM_ERROR;
+		debug(5, 1) ("comm_select: epoll failure: %s\n", xstrerror());
+		return COMM_ERROR;
     }
     //statHistCount(&statCounter.select_fds_hist, num);
 
+	//超时
     if (num == 0)
 	return COMM_TIMEOUT;
 
     for (i = 0, cevents = events; i < num; i++, cevents++) {
 		fd = cevents->data.fd;
+		//cevents->events & ~EPOLLOUT, cevents->events & ~EPOLLIN是否有读事件或者是写事件
 		comm_call_handlers(fd, cevents->events & ~EPOLLOUT, cevents->events & ~EPOLLIN);
     }
 

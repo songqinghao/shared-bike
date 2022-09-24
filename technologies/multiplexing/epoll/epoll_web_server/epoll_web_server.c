@@ -20,9 +20,9 @@ struct _ConnectStat {
 	int fd;
 	char name[64];
 	char  age[64];
-	struct epoll_event _ev;
+	struct epoll_event _ev;//保存我们现在的这个文件的event
 	int  status;//0 -未登录   1 - 已登陆
-	response_handler handler;//不同页面的处理函数
+	response_handler handler;//不同页面的处理函数，函数指针（未登录调用处理、已登录调用处理）
 };
 
 //http协议相关代码
@@ -106,13 +106,13 @@ int main(int argc, char *argv[])
 
 	struct epoll_event _ev;       //epoll结构填充 
 	ConnectStat * stat = stat_init(listen_sock);
-	_ev.events = EPOLLIN;         //初始关心事件为读
+	_ev.events = EPOLLIN;         //初始关心事件为读，请求客户端进行连接
 	_ev.data.ptr = stat;
 	//_ev.data.fd = listen_sock;
 
 	//2.托管
 	epoll_ctl(epfd, EPOLL_CTL_ADD, listen_sock, &_ev);  //将listen sock添加到epfd中，关心读事件
-	//64可表示为已就绪的事件最大数目
+	//64可表示为同时接收 的事件最大数目
 	struct epoll_event revs[64];
 
 	int timeout = -1;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 	while (!done)
 	{
 		//epoll_wait()相当于在检测事件
-		switch ((num = epoll_wait(epfd, revs, 64, timeout)))  //返回需要处理的事件数目  64表示 事件有多大
+		switch ((num = epoll_wait(epfd, revs, 64, timeout)))  //返回需要处理的事件数目  64表示返回事件最大有多大
 		{
 		case 0:                  //返回0 ，表示监听超时
 			printf("timeout\n");
@@ -138,10 +138,10 @@ int main(int argc, char *argv[])
 			int i;
 			for (i = 0; i < num; i++)//num为已经就绪的事件
 			{
-				ConnectStat * stat = (ConnectStat *)revs[i].data.ptr;//拿到客户端连接状态
+				ConnectStat * stat = (ConnectStat *)revs[i].data.ptr;//拿到客户端连接状态，拿到stat
 
 				int rsock = stat->fd; //准确获取哪个事件的描述符
-				if (rsock == listen_sock && (revs[i].events) && EPOLLIN) //如果是初始的 就接受，建立链接
+				if (rsock == listen_sock && (revs[i].events) && EPOLLIN) //如果是初始的，就接受，建立链接
 				{
 					int new_fd = accept(listen_sock, (struct sockaddr*)&peer, &len);
 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-
+//初始化connectstat，在这没有设置哪个handler进行处理
 ConnectStat * stat_init(int fd) {
 	ConnectStat * temp = NULL;
 	temp = (ConnectStat *)malloc(sizeof(ConnectStat));
@@ -186,7 +186,7 @@ ConnectStat * stat_init(int fd) {
 	}
 
 	memset(temp, '\0', sizeof(ConnectStat));
-	temp->fd = fd;
+	temp->fd = fd;	
 	temp->status = 0;
 	//temp->handler = welcome_response_handler;
 
@@ -197,10 +197,10 @@ void connect_handle(int new_fd) {
 	ConnectStat *stat = stat_init(new_fd);
 	set_nonblock(new_fd);
 
-	stat->_ev.events = EPOLLIN;
+	stat->_ev.events = EPOLLIN;//套接字可读
 	stat->_ev.data.ptr = stat;
 
-	epoll_ctl(epfd, EPOLL_CTL_ADD, new_fd, &stat->_ev);    //二次托管
+	epoll_ctl(epfd, EPOLL_CTL_ADD, new_fd, &stat->_ev);    //二次托管，将event再传进去
 
 }
 
