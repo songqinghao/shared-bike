@@ -206,7 +206,7 @@ int main(int argc,char **argv){
 	comm_init(102400);
 	
 	ConnectStat * stat = stat_init(listen_sock);
-	//如果有listen有read事件那就采用accept_connection来处理
+	//如果有listen有read事件那就采用accept_connection来处理，处理函数的参数、fd均保存到fd_table中
 	commUpdateReadHandler(listen_sock,accept_connection,(void *)stat);
 
 	do{
@@ -215,9 +215,6 @@ int main(int argc,char **argv){
 	}while(1==1);
 	//清理资源
 	comm_select_shutdown();
-
-
-
 }
 
 

@@ -11,14 +11,16 @@ fde *fd_table = NULL;
 
 time_t getCurrentTime(void)
 {
+    //获取当前日期时间
     gettimeofday(&current_time, NULL);
+    //求几点几秒，时间戳
     current_dtime = (double) current_time.tv_sec +
 	(double) current_time.tv_usec / 1000000.0;
     return sys_curtime = current_time.tv_sec;
 }
 
-
-void
+//清理资源
+void 
 comm_close(int fd)
 {
 	assert(fd>0);
@@ -86,17 +88,18 @@ commSetTimeout(int fd, int timeout, PF * handler, void *data)
     assert(fd < Biggest_FD);
     F = &fd_table[fd];
 
-	
+	//如果超时值小于零，不进行超时处理
     if (timeout < 0) {
-	F->timeout_handler = NULL;
-	F->timeout_data = NULL;
-	return F->timeout = 0;
+        F->timeout_handler = NULL;
+        F->timeout_data = NULL;
+        return F->timeout = 0;
     }
     assert(handler || F->timeout_handler);
     if (handler || data) {
-	F->timeout_handler = handler;
-	F->timeout_data = data;
+        F->timeout_handler = handler;
+        F->timeout_data = data;
     }
+    //超时的时间为当前时间+自己设置的超时
     return F->timeout = sys_curtime + (time_t) timeout;
 }
 
@@ -162,24 +165,24 @@ comm_select(int msec)
     debug(5, 3) ("comm_select: timeout %d\n", msec);
 
     if (msec > MAX_POLL_TIME)
-	msec = MAX_POLL_TIME;
+	    msec = MAX_POLL_TIME;
 
 
     //statCounter.select_loops++;
     /* Check timeouts once per second */
     if (last_timeout + 0.999 < current_dtime) {
-	last_timeout = current_dtime;
-	checkTimeouts();
-    } else {
-	int max_timeout = (last_timeout + 1.0 - current_dtime) * 1000;
-	if (max_timeout < msec)
-	    msec = max_timeout;
+	    last_timeout = current_dtime;
+	    checkTimeouts();//本意就是一秒钟调用过一次check_timeout
+    } else {//离上一次的超时值过1秒
+	    int max_timeout = (last_timeout + 1.0 - current_dtime) * 1000;
+	    if (max_timeout < msec)
+	        msec = max_timeout;
     }
     //comm_select_handled = 0;
-
+    //上面的操作能够保证一秒钟一定能执行一次
     rc = do_epoll_select(msec);
 
-
+    //修正时间戳，上面的操作能够保证一秒钟一定能执行一次
     getCurrentTime();
     //statCounter.select_time += (current_dtime - start);
 
