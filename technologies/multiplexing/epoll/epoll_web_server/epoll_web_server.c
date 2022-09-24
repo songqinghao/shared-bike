@@ -11,7 +11,7 @@
 #include<fcntl.h>
 #include<unistd.h>
 
-//    int fd;
+
 typedef struct _ConnectStat  ConnectStat;
 
 typedef void(*response_handler) (ConnectStat * stat);
