@@ -1,4 +1,4 @@
-﻿#include "globals.h"
+#include "globals.h"
 typedef struct _ConnectStat  ConnectStat;
 
 #define BUFLEN  1024
@@ -11,9 +11,9 @@ struct _ConnectStat {
 
 //echo 服务实现相关代码
 ConnectStat * stat_init(int fd);
-void accept_connection(int fd, void *data);
-void do_echo_handler(int fd, void  *data);
-void do_echo_response(int fd,void *data);//用作响应
+void accept_connection(int fd, void *data);//接收连接
+void do_echo_handler(int fd, void  *data);//回声请求
+void do_echo_response(int fd,void *data);//用作响应请求
 void do_echo_timeout(int fd, void *data);//超时处理
 
 
@@ -93,6 +93,7 @@ void do_welcome_handler(int fd, void  *data) {
 		}else fprintf(stderr, "send %d bytes only ,need to send %d bytes.\n",n,wlen);
 		
 	}else {
+		//创建读事件，10秒之内如果有客户端read则采用do_echo_handler函数来读
 		commUpdateReadHandler(fd, do_echo_handler,(void *)stat);
 		commSetTimeout(fd, 10, do_echo_timeout, (void *)stat);
 	}
@@ -174,9 +175,10 @@ void accept_connection(int fd, void *data){
 	{
 		//注册了一个写事件，如果超时了就调用do_echo_timeout
 		ConnectStat *stat = stat_init(new_fd);
-		set_nonblock(new_fd);
+		set_nonblock(new_fd);//设置为非阻塞
 
 		printf("new client: %s:%d\n", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
+		//进行事件注册
 		commUpdateWriteHandler(new_fd, do_welcome_handler, (void *)stat);
 		commSetTimeout(new_fd, 30,do_echo_timeout, (void *)stat);
 	}
@@ -198,9 +200,9 @@ int main(int argc,char **argv){
 		exit(1);
 	}
 
-	int listen_sock = startup(argv[1], atoi(argv[2]));      //创建一个绑定了本地 ip 和端口号的套接字描述符
-	//初始化异步事件处理框架epoll，epoll可以处理102400个并发
+	int listen_sock = startup(argv[1], atoi(argv[2]));//创建一个绑定了本地 ip 和端口号的套接字描述符
 	
+	//初始化异步事件处理框架epoll，epoll可以处理102400个并发
 	comm_init(102400);
 	
 	ConnectStat * stat = stat_init(listen_sock);
@@ -208,9 +210,8 @@ int main(int argc,char **argv){
 	commUpdateReadHandler(listen_sock,accept_connection,(void *)stat);
 
 	do{
-		//不断循环处理事件
-		comm_select(1000);
-		
+		//不断循环处理事件，超时时间，看1s会不会有返回
+		comm_select(1000);	
 	}while(1==1);
 	//清理资源
 	comm_select_shutdown();

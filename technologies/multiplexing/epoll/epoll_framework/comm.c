@@ -1,4 +1,4 @@
-﻿#include "globals.h"
+#include "globals.h"
 
 double current_dtime;
 time_t sys_curtime;
@@ -133,9 +133,9 @@ checkTimeouts(void)
 	    continue;
 	*/
 	
-	if (F->timeout == 0)
+	if (F->timeout == 0)//没有设置超时时间
 	    continue;
-	if (F->timeout > sys_curtime)
+	if (F->timeout > sys_curtime)//还没到超时时间
 	    continue;
 	debug(5, 5) ("checkTimeouts: FD %d Expired\n", fd);
 	

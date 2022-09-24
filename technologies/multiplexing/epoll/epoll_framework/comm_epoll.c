@@ -5,10 +5,11 @@
 
 /* epoll structs */
 static int kdpfd;
-static struct epoll_event events[MAX_EVENTS];//同时处理的事件数量
+static struct epoll_event events[MAX_EVENTS];/* 同时处理的最大事件数量 */
 static int epoll_fds = 0;
 static unsigned *epoll_state;	/* 保存每个epoll 的事件状态 */
 
+//op取值
 static const char *
 epolltype_atoi(int x)
 {
@@ -28,15 +29,19 @@ epolltype_atoi(int x)
     }
 }
 
+//max_fd：处理最大文件描述符
 void do_epoll_init(int max_fd)
 {
+
     kdpfd = epoll_create(max_fd);
     if (kdpfd < 0)
 	  fprintf(stderr,"do_epoll_init: epoll_create(): %s\n", xstrerror());
     //fd_open(kdpfd, FD_UNKNOWN, "epoll ctl");
     //commSetCloseOnExec(kdpfd);
-
-    epoll_state = calloc(max_fd, sizeof(*epoll_state));//用于保存events取值（epollin、epollout...）,以fd作为下标进行查找
+	
+	//分配max_fd个epoll_state大小的空间
+	//用于保存fd的events取值（epollin、epollout...）,以fd作为下标进行查找
+    epoll_state = calloc(max_fd, sizeof(*epoll_state));
 }
 
 
@@ -73,33 +78,35 @@ void epollSetEvents(int fd, int need_read, int need_write)
     if (ev.events)
 	ev.events |= EPOLLHUP | EPOLLERR;
 
+	//如果和上次设置的不相等，则进行下面操作，看是add、mod、del
     if (ev.events != epoll_state[fd]) {
-	/* If the struct is already in epoll MOD or DEL, else ADD */
-	if (!ev.events) {
-	    epoll_ctl_type = EPOLL_CTL_DEL;//干掉，删除
-	} else if (epoll_state[fd]) {
-	    epoll_ctl_type = EPOLL_CTL_MOD;//如果以前有就改变（MOD）
-	} else {
-	    epoll_ctl_type = EPOLL_CTL_ADD;
-	}
+		/* If the struct is already in epoll MOD or DEL, else ADD */
+		if (!ev.events) {
+			epoll_ctl_type = EPOLL_CTL_DEL;//干掉，删除
+		} else if (epoll_state[fd]) {
+			epoll_ctl_type = EPOLL_CTL_MOD;//如果以前有就改变（MOD）
+		} else {
+			epoll_ctl_type = EPOLL_CTL_ADD;
+		}
 
-	/* Update the state */
-	epoll_state[fd] = ev.events;
+		/* Update the state */
+		epoll_state[fd] = ev.events;
 
-	if (epoll_ctl(kdpfd, epoll_ctl_type, fd, &ev) < 0) {
-	    debug(5, 1) ("commSetEvents: epoll_ctl(%s): failed on fd=%d: %s\n",
-		epolltype_atoi(epoll_ctl_type), fd, xstrerror());
-	}
-	switch (epoll_ctl_type) {
-	case EPOLL_CTL_ADD:
-	    epoll_fds++;//epoll_fds就是epoll监听fd的总数
-	    break;
-	case EPOLL_CTL_DEL:
-	    epoll_fds--;
-	    break;
-	default:
-	    break;
-	}
+		if (epoll_ctl(kdpfd, epoll_ctl_type, fd, &ev) < 0) {
+			debug(5, 1) ("commSetEvents: epoll_ctl(%s): failed on fd=%d: %s\n",
+			epolltype_atoi(epoll_ctl_type), fd, xstrerror());
+		}
+		//更新epoll_fds
+		switch (epoll_ctl_type) {
+		case EPOLL_CTL_ADD:
+			epoll_fds++;//epoll_fds就是epoll监听fd的总数
+			break;
+		case EPOLL_CTL_DEL:
+			epoll_fds--;
+			break;
+		default:
+			break;
+		}
     }
 }
 
@@ -120,10 +127,10 @@ int do_epoll_select(int msec)
     num = epoll_wait(kdpfd, events, MAX_EVENTS, msec);
     if (num < 0) {
 		getCurrentTime();
-		//是不是可以忽略
+		//看是否能忽略
 		if (ignoreErrno(errno))
 	    	return COMM_OK;
-
+		//如果不能忽略，那就返回出错
 		debug(5, 1) ("comm_select: epoll failure: %s\n", xstrerror());
 		return COMM_ERROR;
     }
