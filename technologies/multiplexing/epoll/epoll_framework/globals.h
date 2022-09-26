@@ -1,4 +1,4 @@
-#ifndef GLOBALS_H
+﻿#ifndef GLOBALS_H
 #define GLOBALS_H
 
 #include <sys/time.h>
@@ -38,29 +38,28 @@
 
 typedef void PF(int, void *);
 
-//fd所对应的各种信息和参数
 struct _fde {
     unsigned int type;
-    u_short local_port;//本地端口
-    u_short remote_port;//远程端口
-    struct in_addr local_addr;//地址
+    u_short local_port;
+    u_short remote_port;
+    struct in_addr local_addr;
  
-    char ipaddr[16];		/* dotted decimal address of peer 点分制地址*/
+    char ipaddr[16];		/* dotted decimal address of peer */
    
    
-    PF *read_handler;//读处理的函数指针
+    PF *read_handler;
     void *read_data;
     PF *write_handler;
     void *write_data;
     PF *timeout_handler;
     time_t timeout;
-    void *timeout_data;//timeout处理时所对应的数据
+    void *timeout_data;
 };
 
 typedef struct _fde fde;
 
-extern fde *fd_table;  //fd=1=》fd_table[1]用作下标		
-extern int Biggest_FD; //初始化连接	
+extern fde *fd_table;		
+extern int Biggest_FD;		
 
 /*系统时间相关,设置成全局变量，供所有模块使用*/
 extern struct timeval current_time;
@@ -69,15 +68,12 @@ extern time_t sys_curtime;
 
 
 /* epoll 相关接口实现 */
-/* epoll 封装 */
 extern void do_epoll_init(int max_fd);
 extern void do_epoll_shutdown();
 extern void epollSetEvents(int fd, int need_read, int need_write);
 extern int do_epoll_select(int msec);
 
 /*框架外围接口*/
-/*给用户调用*/
-void comm_init(int max_fd)
 extern int comm_select(int msec);
 extern inline void comm_call_handlers(int fd, int read_event, int write_event);
 void  commUpdateReadHandler(int fd, PF * handler, void *data);
@@ -85,7 +81,7 @@ void commUpdateWriteHandler(int fd, PF * handler, void *data);
 
 
 
-extern const char *xstrerror(void);//扩展型的string error
-int ignoreErrno(int ierrno);//忽略错误
+extern const char *xstrerror(void);
+int ignoreErrno(int ierrno);
 
 #endif /* GLOBALS_H */
