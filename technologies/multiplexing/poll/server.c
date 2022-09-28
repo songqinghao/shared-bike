@@ -49,21 +49,27 @@ int main()
         char ch;
         int i,fd;
         int nread;
-        printf("server waiting\n");
+        //printf("server waiting\n");
 
-        /*超时时间设为2s，并测试文件描述符变动 select就是用于监视*/
+        /*有事件发生  返回revents域不为0的文件描述符个数
+         *超时：return 0
+         *失败：return  -1   错误：errno 
+	 */
         result = poll(fds, cur_max_fd, 2000);
-        //超时则<0
         if (result < 0)
         {
             perror("server5");
             exit(1);
         }
+	if (result == 0)
+	{
+	    printf("timeout!!\n");
+	}
 
         /*扫描所有的文件描述符*/
         for (i = 0; i < cur_max_fd; i++)
         {
-            /*找到相关文件描述符 是否是在testfds中的fd*/
+            /*找到相关文件描述符 如果是该fd发生事件则revent返回事件类型*/
             if (fds[i].revents)
             {
                 fd = fds[i].fd;
@@ -81,11 +87,10 @@ int main()
                     setMaxFD(client_sockfd);
                     printf("adding client on fd %d\n", client_sockfd);
                 }
-                /*客户端socket中有数据请求时*/
                 else
                 {
+		    /*如果是触发客户端fd的读事件，即有"人"对client_fd进行write或者是close操作*/
                     if(fds[i].revents & POLLIN){
-                        //ioctl(fd, FIONREAD, &nread);//取得数据量交给nread
                         nread = read(fd, &ch, 1);//读一个字节，返回数据量
                         /*客户数据请求完毕，关闭套接字，从集合中清除相应描述符 如果数据量为0表示已经请求完毕*/
                         if (nread == 0)
@@ -103,7 +108,6 @@ int main()
                             printf("serving client on fd %d，receive:%c\n", fd,ch);
                             ch++;
                             fds[i].events = POLLOUT;
-                            //write(fd, &ch, 1);
                         }
                     }else if(fds[i].revents & POLLOUT){//数据可写，写通道准备好了
                         write(fd, &ch, 1);

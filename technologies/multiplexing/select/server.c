@@ -49,10 +49,11 @@ int main()
                 /*判断是否为服务器套接字，是则表示为客户请求连接。*/
                 if (fd == server_sockfd)
                 {
+		    printf("receive client connect!!!\n");
                     client_len = sizeof(client_address);
                     //记录客户端的fd
                     client_sockfd = accept(server_sockfd,
-                        (struct sockaddr*)&client_address, &client_len);
+                    (struct sockaddr*)&client_address, &client_len);
                     FD_SET(client_sockfd, &readfds);//将客户端socket加入到集合中
                     printf("adding client on fd %d\n", client_sockfd);
                 }
@@ -71,6 +72,7 @@ int main()
                     /*处理客户数据请求*/
                     else
                     {
+			printf("deal with client require!!\n");
                         read(fd, &ch, 1);
                         sleep(5);
                         printf("serving client on fd %d\n", fd);

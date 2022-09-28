@@ -20,6 +20,7 @@ int main()
     address.sin_port = htons(9000);
     len = sizeof(address);
     result = connect(client_sockfd, (struct sockaddr*)&address, len);
+    printf("connect server!!\n");
     if (result == -1)
     {
         perror("oops: client2");
@@ -27,6 +28,7 @@ int main()
     }
     //第一次读写
     write(client_sockfd, &ch, 1);
+    printf("first write %c\n",ch);
     read(client_sockfd, &ch, 1);
     printf("the first time: char from server = %c\n", ch);
     sleep(5);
