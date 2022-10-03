@@ -2,6 +2,8 @@
 #include "bike.pb.h"
 #include "event.h"
 #include "events_def.h"
+#include "user_event_handler.h"
+
 using namespace std;
 int main()
 {
@@ -16,6 +18,9 @@ int main()
 
     MobileCodeRspEv mcre(200, 666666);
     mcre.dump(cout);
+
+    UserEventHandler uehl;
+    uehl.handle(&me);
     return 0;  
 }
 
