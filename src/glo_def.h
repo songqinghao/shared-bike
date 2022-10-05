@@ -4,6 +4,8 @@
 extern "C"{
 #endif 
 
+#define LOG_DEBUG printf
+#define LOG_WARN printf
 #define TRUE 1
 #define FALSE 0
 

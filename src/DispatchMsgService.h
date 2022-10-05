@@ -29,7 +29,7 @@ class DispatchMsgService
         //解除关联
         virtual void unsubscribe(u32 eid, iEventHandler* handler);
         //将事件投入到线程池中
-        virtual i32 enqueue(u32 eid);
+        virtual i32 enqueue(iEvent*ev);
 
         //C回调C++的方法得用static
         static void svc(void* argv);
