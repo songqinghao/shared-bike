@@ -1,5 +1,5 @@
 #include "user_event_handler.h"
-// #include "DispatchMsgService.h"
+#include "DispatchMsgService.h"
 // #include "sqlconnection.h"
 // #include "iniconfig.h"
 // #include "user_service.h"
@@ -13,6 +13,9 @@
 
 UserEventHandler::UserEventHandler():iEventHandler()
 {
+	DispatchMsgService::getInstance()->subscribe(EEVENTID_GET_MOBILE_CODE_REQ,this);//将当前作为指针进行传递作为handler
+	DispatchMsgService::getInstance()->subscribe(EEVENTID_LOGIN_REQ,this);
+
 	//未来需要实现订阅事件的处理
 	thread_mutex_create(&pm_);
 }
@@ -20,6 +23,9 @@ UserEventHandler::UserEventHandler():iEventHandler()
 UserEventHandler::~UserEventHandler()
 {
 	//未来需要实现退订事件的处理
+	DispatchMsgService::getInstance()->unsubscribe(EEVENTID_GET_MOBILE_CODE_REQ,this);
+	DispatchMsgService::getInstance()->unsubscribe(EEVENTID_LOGIN_REQ,this);
+	
 	thread_mutex_destroy(&pm_);
 }
 

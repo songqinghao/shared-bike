@@ -26,7 +26,7 @@ BOOL DispatchMsgService::open()
 BOOL DispatchMsgService::close()
 {
     svr_exit_ = false;
-    thread_cond_destroy(tp);
+    thread_pool_destroy(tp);
     tp = NULL;
 }
 
@@ -71,7 +71,47 @@ i32 DispatchMsgService::enqueue(iEvent* ev)
     task->ctx = ev;//回调时带的参数
     //-------------------------------------------------------------------------
 
+    //把任务投到线程池中
     return thread_task_post(tp, task);
 
     //return msg_queue_.enqueue(ev, 0);
 }
+
+//实现订阅
+void DispatchMsgService::subscribe(u32 eid, iEventHandler* handler)
+{
+    LOG_DEBUG("DispatchMsgService::subscribe eid: %u\n", eid);
+    //查找看看是不是已经进行过订阅了
+    T_EventHandlersMap::iterator iter = subscribers_.find(eid);
+    //之前已经有注册过
+    if (iter != subscribers_.end())
+    {
+        //看看订阅的方法是不是有handler存在
+        T_EventHandlers::iterator hdl_iter = std::find(iter->second.begin(), iter->second.end(), handler);
+        if (hdl_iter == iter->second.end())
+        {
+            //如果不一样，则加到后面（一个事件可以由多个事件处理器进行处理）
+            iter->second.push_back(handler);
+        }
+    }
+    else
+    {
+        //如果没有绑定任何任务处理器
+        subscribers_[eid].push_back(handler);
+    }
+}
+
+//实现退订（就是订阅相反的过程）
+void DispatchMsgService::unsubscribe(u32 eid, iEventHandler* handler)
+{
+    T_EventHandlersMap::iterator iter = subscribers_.find(eid);
+    if (iter != subscribers_.end())
+    {
+        T_EventHandlers::iterator hdl_iter = std::find(iter->second.begin(), iter->second.end(), handler);
+        if (hdl_iter != iter->second.end())
+        {
+            iter->second.erase(hdl_iter);
+        }
+    }
+}
+
