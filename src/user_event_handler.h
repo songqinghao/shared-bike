@@ -4,8 +4,8 @@
 #include "glo_def.h"
 #include "iEventHandler.h"
 #include "events_def.h"
-
-
+#include "thread_pool.h"
+#include "thread.h"
 //具体用户处理事件的类，继承自时间处理类
 class UserEventHandler : public iEventHandler
 {

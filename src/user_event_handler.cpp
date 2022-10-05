@@ -14,13 +14,13 @@
 UserEventHandler::UserEventHandler():iEventHandler()
 {
 	//未来需要实现订阅事件的处理
-	
+	thread_mutex_create(&pm_);
 }
 
 UserEventHandler::~UserEventHandler()
 {
 	//未来需要实现退订事件的处理
-	
+	thread_mutex_destroy(&pm_);
 }
 
 iEvent* UserEventHandler::handle(const iEvent* ev)
@@ -67,9 +67,9 @@ MobileCodeRspEv* UserEventHandler::handle_mobile_code_req(MobileCodeReqEv* ev)
     //icode为验证码
 	icode = code_gen();
 	//thread_mutex_lock(&pm_);
-    
+    thread_mutex_lock(&pm_);
 	m2c_[mobile_] = icode;
-	//thread_mutex_unlock(&pm_);
+	thread_mutex_unlock(&pm_);
 	printf("mobile: %s, code: %d\n", mobile_.c_str(), icode);
 	
 	return new MobileCodeRspEv(200, icode);
