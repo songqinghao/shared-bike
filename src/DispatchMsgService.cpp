@@ -47,7 +47,8 @@ void DispatchMsgService::svc(void* argv)
     if (!dms->svr_exit_)
     {
         LOG_DEBUG("DispatchMsgService::svc ...\n");
-        iEvent* rsp = dms->process(ev);
+        //iEvent* rsp = 
+        dms->process(ev);
         //删除事件
         delete ev;
 
@@ -113,5 +114,45 @@ void DispatchMsgService::unsubscribe(u32 eid, iEventHandler* handler)
             iter->second.erase(hdl_iter);
         }
     }
+}
+
+void DispatchMsgService::process(const iEvent* ev)
+{
+    LOG_DEBUG("DispatchMsgService::process -ev: %p\n", ev);
+    if (NULL == ev)
+    {
+        return ;
+    }
+    
+    u32 eid = ev->get_eid();
+
+    LOG_DEBUG("DispatchMsgService::process - eid: %u\n", eid);
+
+    if (eid == EEVENTID_UNKNOWN)
+    {
+        LOG_WARN("DispatchMsgService : unknow evend id %d", eid);
+        return ;
+    }
+
+    //LOG_DEBUG("dispatch ev : %d\n", ev->get_eid());
+
+    T_EventHandlersMap::iterator handlers = subscribers_.find(eid);
+    if (handlers == subscribers_.end())
+    {
+        LOG_WARN("DispatchMsgService : no any event handler subscribed %d", eid);
+        return ;
+    }
+
+    //存在有事件处理器
+    iEvent* rsp = NULL;
+    for (auto iter = handlers->second.begin(); iter != handlers->second.end(); iter++)
+    {
+        iEventHandler* handler = *iter;
+        LOG_DEBUG("DispatchMsgService : get handler: %s\n", handler->get_name().c_str());
+
+        rsp = handler->handle(ev);//推荐使用vector 或list 返回多个rsp 
+    }
+
+    //return rsp;
 }
 

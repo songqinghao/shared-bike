@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-UserEventHandler::UserEventHandler():iEventHandler()
+UserEventHandler::UserEventHandler():iEventHandler("UserEventHandler")
 {
 	DispatchMsgService::getInstance()->subscribe(EEVENTID_GET_MOBILE_CODE_REQ,this);//将当前作为指针进行传递作为handler
 	DispatchMsgService::getInstance()->subscribe(EEVENTID_LOGIN_REQ,this);

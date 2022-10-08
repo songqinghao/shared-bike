@@ -130,6 +130,15 @@ thread_task_alloc(size_t size)//调用任务函数传输的参数大小size=size
     return task;
 }
 
+void thread_task_free(thread_task_t* task)
+{
+    if(task)
+    {
+        free(task);
+        //task = NULL;
+    }
+}
+
 
 int_t
 thread_task_post(thread_pool_t *tp, thread_task_t *task)
@@ -223,8 +232,8 @@ thread_pool_cycle(void *data)
 
         task->next = NULL;
 
-        //释放task
-        free(task);
+        //释放task，防止内存泄漏
+        thread_task_free(task);
         //notify 
     }
 }

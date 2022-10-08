@@ -15,6 +15,7 @@
 #include "iEventHandler.h"
 #include "thread_pool.h"
 #include "thread.h"
+#include "ievent.h"
 //#include "NetworkInterface.h"
 
 class DispatchMsgService
@@ -35,7 +36,7 @@ class DispatchMsgService
         static void svc(void* argv);
         
         //对具体事件进行分发处理
-        virtual iEvent* process(const iEvent*ev);
+        virtual void process(const iEvent*ev);
 
         //static保证只有一个
         static DispatchMsgService* getInstance();

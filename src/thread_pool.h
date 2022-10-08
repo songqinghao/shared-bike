@@ -45,6 +45,8 @@ struct thread_pool_s {
 };
 
 thread_task_t *thread_task_alloc(size_t size);
+//释放，防止内存泄漏
+void thread_task_free(thread_task_t* task);
 int_t thread_task_post(thread_pool_t *tp, thread_task_t *task);
 thread_pool_t* thread_pool_init();
 void thread_pool_destroy(thread_pool_t *tp);
