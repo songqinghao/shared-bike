@@ -12,7 +12,6 @@ DispatchMsgService::DispatchMsgService()
     svr_exit_ = false;
     //对线程池进行清空
     tp = NULL;
-    NTIF_ = NULL;
 }
 
 DispatchMsgService::~DispatchMsgService()
