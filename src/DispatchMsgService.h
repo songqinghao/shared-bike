@@ -16,31 +16,41 @@
 #include "thread_pool.h"
 #include "thread.h"
 #include "ievent.h"
-//#include "NetworkInterface.h"
+#include "bike.pb.h"
+#include "glob.h"
+#include "events_def.h"
+#include "NetworkInterface.h"
 
 class DispatchMsgService
 {
-    public:
+    protected:
+        //设置成protected是为了避免构造多个DispatchMsgService类
         DispatchMsgService();
+    public:
         virtual ~DispatchMsgService();
-        virtual BOOL open();//打开线程池
+        virtual BOOL open();//打开服务（线程池开启）
         virtual BOOL close();//关闭线程池
-        //将事件和handler进行关联
+        //将事件和handler进行关联，后面也需要把关联关系给保存下来
         virtual void subscribe(u32 eid, iEventHandler* handler);
         //解除关联
         virtual void unsubscribe(u32 eid, iEventHandler* handler);
-        //将事件投入到线程池中
+        //将事件投入到线程池中处理
         virtual i32 enqueue(iEvent*ev);
 
-        //C回调C++的方法得用static
+        //给线程池回调的函数（C回调C++的方法得用static）
         static void svc(void* argv);
         
-        //对具体事件进行分发处理
-        virtual void process(const iEvent*ev);
+        //对具体事件进行分发处理（将不同的事件方法给不一样的事件处理器）
+        virtual iEvent* process(const iEvent*ev);
 
         //static保证只有一个
         static DispatchMsgService* getInstance();
+        iEvent* parseEvent(const char* messages,u32 len, u32 eid); 
 
+        // static void setNetworkInterface(NetworkInterface* nwif){NTIF_ = nwif;};
+        
+        //将队列中的所有响应元素进行发送加载
+        void handleAllResponseEvent(NetworkInterface* interface);
     protected:
         thread_pool_t* tp;
         //单例
@@ -52,6 +62,10 @@ class DispatchMsgService
         T_EventHandlersMap subscribers_;
 
         bool svr_exit_;//服务是否开启
+
+        static std::queue<iEvent*>response_events;//存储event的响应队列
+        static pthread_mutex_t queue_mutex;//用于锁队列的锁
+   
 };
 
 #endif

@@ -51,6 +51,7 @@ int_t thread_task_post(thread_pool_t *tp, thread_task_t *task);
 thread_pool_t* thread_pool_init();
 void thread_pool_destroy(thread_pool_t *tp);
 #ifdef __cpluscplus
+}
 #endif
 
 

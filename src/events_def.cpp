@@ -8,7 +8,7 @@ std::ostream& MobileCodeReqEv::dump(std::ostream& out) const
     out<<"mobile=" << msg_.mobile() << std::endl;
     return out;
 }
-
+ 
 std::ostream& MobileCodeRspEv::dump(std::ostream& out)const
 {
     out << "MobileCodeRsp sn = " << get_sn()<<",";

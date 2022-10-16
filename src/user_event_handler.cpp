@@ -13,16 +13,18 @@
 
 UserEventHandler::UserEventHandler():iEventHandler("UserEventHandler")
 {
-	DispatchMsgService::getInstance()->subscribe(EEVENTID_GET_MOBILE_CODE_REQ,this);//将当前作为指针进行传递作为handler
+	//将当前作为指针进行传递作为handler，后面会调用该类下的handle方法
+	DispatchMsgService::getInstance()->subscribe(EEVENTID_GET_MOBILE_CODE_REQ,this);
 	DispatchMsgService::getInstance()->subscribe(EEVENTID_LOGIN_REQ,this);
 
 	//未来需要实现订阅事件的处理
+	//初始化pm
 	thread_mutex_create(&pm_);
 }
 
 UserEventHandler::~UserEventHandler()
 {
-	//未来需要实现退订事件的处理
+	//实现退订事件hangdle的处理
 	DispatchMsgService::getInstance()->unsubscribe(EEVENTID_GET_MOBILE_CODE_REQ,this);
 	DispatchMsgService::getInstance()->unsubscribe(EEVENTID_LOGIN_REQ,this);
 	
@@ -42,6 +44,7 @@ iEvent* UserEventHandler::handle(const iEvent* ev)
 
 	if (eid == EEVENTID_GET_MOBILE_CODE_REQ)
 	{
+		//返回手机验证码响应
 		return handle_mobile_code_req((MobileCodeReqEv*)ev);
 	}
 	else if (eid == EEVENTID_LOGIN_REQ)
@@ -72,12 +75,14 @@ MobileCodeRspEv* UserEventHandler::handle_mobile_code_req(MobileCodeReqEv* ev)
 	printf("try to get moblie phone %s validate code .\n", mobile_.c_str());
     //icode为验证码
 	icode = code_gen();
-	//thread_mutex_lock(&pm_);
+	//修改之前进行上锁
     thread_mutex_lock(&pm_);
 	m2c_[mobile_] = icode;
+	//修改后进行解锁
 	thread_mutex_unlock(&pm_);
 	printf("mobile: %s, code: %d\n", mobile_.c_str(), icode);
 	
+	//返回验证码响应事件，以刚刚随机产生的验证码进行初始化
 	return new MobileCodeRspEv(200, icode);
 }
 

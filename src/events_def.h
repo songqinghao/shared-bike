@@ -1,9 +1,10 @@
 #ifndef BRKS_COMMON_EVENT_DEF_H_
 #define BRKS_COMMON_EVENT_DEF_H_
 
-#include "event.h"
+#include "ievent.h"
 #include "bike.pb.h"
 #include <string>
+//手机验证码请求
 class MobileCodeReqEv:public iEvent
 {
     public:
@@ -13,8 +14,10 @@ class MobileCodeReqEv:public iEvent
         };
 
         const std::string& get_mobile(){return msg_.mobile();};
+        //打印信息
         virtual std::ostream& dump(std::ostream& out) const;
-        
+        virtual i32 ByteSize() { return msg_.ByteSize(); };
+        virtual bool SerializeToArray(char* buf,int len){ return msg_.SerializeToArray(buf,len);};
     private:
         tutorial::mobile_request msg_;
 
@@ -39,10 +42,21 @@ class MobileCodeRspEv : public iEvent
 
         //返回类的描述
         virtual std::ostream& dump(std::ostream& out) const;
-	    //virtual i32 ByteSize() { return msg_.ByteSize(); };
-	    //virtual bool SerializeToArray(char* buf, int len) { return 
+	    //msg_ByteSize()就是msg序列化以后占的buffer空间
+        virtual i32 ByteSize() { return msg_.ByteSize(); };
+	    virtual bool SerializeToArray(char* buf,int len){ return msg_.SerializeToArray(buf,len);};
+
     private:
         tutorial::mobile_response msg_;  
+};
+
+class ExitRspEv:public iEvent
+{
+    public:
+        ExitRspEv():iEvent(EEVENTID_EXIT_RSP,iEvent::generateSeqNo())
+        {
+
+        }
 };
 
 

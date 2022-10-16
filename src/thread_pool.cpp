@@ -146,7 +146,7 @@ thread_task_post(thread_pool_t *tp, thread_task_t *task)
     if (thread_mutex_lock(&tp->mtx) != OK) {//线程池上锁
         return ERROR;
     }
-    //正在等待的任务数量已经达到最大
+    //正在等待的任务数量已经达到最大，报错
     if (tp->waiting >= tp->max_queue) {
         (void) thread_mutex_unlock(&tp->mtx);//解锁
 
@@ -166,6 +166,7 @@ thread_task_post(thread_pool_t *tp, thread_task_t *task)
         return ERROR;
     }
 
+    //调整线程池的队列
     *tp->queue.last = task;
     tp->queue.last = &task->next;
 

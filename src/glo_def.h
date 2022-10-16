@@ -6,10 +6,15 @@ extern "C"{
 
 #define LOG_DEBUG printf
 #define LOG_WARN printf
+#define LOG_ERROR printf
+//最大消息长度
+#define MAX_MESSAGE_LEN 102400
+
 #define TRUE 1
 #define FALSE 0
 
 #define INVALID_U32 0xFFFF
+    //类型定义
     typedef unsigned char u8;
     typedef unsigned short u16;
     typedef unsigned int u32;

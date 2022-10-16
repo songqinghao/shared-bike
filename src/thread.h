@@ -1,8 +1,9 @@
 #ifndef _DEMO_THREAD_H_INCLUDED_
 #define _DEMO_THREAD_H_INCLUDED_
 
-//下面这些部分以C进行编译
+
 #ifdef __cpluscplus
+//下面这些部分以C进行编译
 extern "C"{
 #endif
 
@@ -34,6 +35,7 @@ int thread_cond_signal(pthread_cond_t *cond);
 int thread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mtx);
 
 #ifdef __cpluscplus
+}
 #endif
 
 #endif /* _DEMO_THREAD_H_INCLUDED_ */
