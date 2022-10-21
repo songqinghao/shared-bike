@@ -2,10 +2,16 @@
 #include <algorithm>
 
 #include "NetworkInterface.h"
+
+/*
+如果你使用xxx.h来定义一个类，然后使用xxx.cc来实现一个类中的方法，然后再yyy.cc中引用xxx.h文件，
+那么如果你在xxx.h的类中声明了一个静态成员变量**（该成员变量是一个指针或者隐含指针），
+那么你应该将这个静态成员变量的初始化（定义）放在xxx.cc文件中
+*/
 //将单例成员进行清空
 DispatchMsgService*DispatchMsgService::DMS_=nullptr;
-std::queue<iEvent*>response_events;//存储event的响应队列
-pthread_mutex_t queue_mutex;//用于锁队列的锁
+std::queue<iEvent*>DispatchMsgService::response_events;//存储event的响应队列
+pthread_mutex_t DispatchMsgService::queue_mutex;//用于锁队列的锁
 DispatchMsgService::DispatchMsgService()
 {
     //服务状态初始化
@@ -156,7 +162,7 @@ iEvent* DispatchMsgService::process(const iEvent* ev)
     LOG_DEBUG("DispatchMsgService::process -ev: %p\n", ev);
     if (NULL == ev)
     {
-        return ;
+        return NULL;
     }
     
     u32 eid = ev->get_eid();
@@ -166,14 +172,14 @@ iEvent* DispatchMsgService::process(const iEvent* ev)
     if (eid == EEVENTID_UNKNOWN)
     {
         LOG_WARN("DispatchMsgService : unknow evend id %d", eid);
-        return ;
+        return NULL;
     }
     //迭代器看看事件有没有被订阅
     T_EventHandlersMap::iterator handlers = subscribers_.find(eid);
     if (handlers == subscribers_.end())
     {
         LOG_WARN("DispatchMsgService : no any event handler subscribed %d", eid);
-        return ;
+        return NULL;
     }
 
     //存在有事件处理器

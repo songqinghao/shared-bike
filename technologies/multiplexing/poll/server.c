@@ -34,7 +34,7 @@ int main()
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);//建立服务器端socket 
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_address.sin_port = htons(9000);
+    server_address.sin_port = htons(9001);
     server_len = sizeof(server_address);
     bind(server_sockfd, (struct sockaddr*)&server_address, server_len);
     listen(server_sockfd, 5); //监听队列最多容纳5个 
@@ -49,23 +49,17 @@ int main()
         char ch;
         int i,fd;
         int nread;
-        //printf("server waiting\n");
-
+        printf("server waiting\n");
         /*有事件发生  返回revents域不为0的文件描述符个数
          *超时：return 0
          *失败：return  -1   错误：errno 
-	 */
+	     */
         result = poll(fds, cur_max_fd, 2000);
         if (result < 0)
         {
             perror("server5");
             exit(1);
         }
-	if (result == 0)
-	{
-	    printf("timeout!!\n");
-	}
-
         /*扫描所有的文件描述符*/
         for (i = 0; i < cur_max_fd; i++)
         {
@@ -89,7 +83,7 @@ int main()
                 }
                 else
                 {
-		    /*如果是触发客户端fd的读事件，即有"人"对client_fd进行write或者是close操作*/
+		            /*如果是触发客户端fd的读事件，即有"人"对client_fd进行write或者是close操作*/
                     if(fds[i].revents & POLLIN){
                         nread = read(fd, &ch, 1);//读一个字节，返回数据量
                         /*客户数据请求完毕，关闭套接字，从集合中清除相应描述符 如果数据量为0表示已经请求完毕*/

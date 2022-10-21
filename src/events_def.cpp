@@ -18,3 +18,12 @@ std::ostream& MobileCodeRspEv::dump(std::ostream& out)const
     out<<"describle = "<< msg_.data() << std::endl;
     return out;
 }
+
+std::ostream& LoginResEv::dump(std::ostream& out) const
+{
+	out << "LoginResEv sn =" << get_sn() << ",";
+	out << "code=" << msg_.code() << std::endl;
+	out << "describle = " << msg_.desc() << std::endl;
+
+	return out;
+}

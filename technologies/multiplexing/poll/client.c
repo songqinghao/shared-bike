@@ -17,7 +17,7 @@ int main()
     client_sockfd = socket(AF_INET, SOCK_STREAM, 0);//建立客户端socket 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = inet_addr("127.0.0.1");
-    address.sin_port = htons(9000);
+    address.sin_port = htons(9001);
     len = sizeof(address);
     result = connect(client_sockfd, (struct sockaddr*)&address, len);
     if (result == -1)

@@ -74,11 +74,6 @@ int main(int argc, char** argv)
     return 0;
 }
  
- 
- 
- 
- 
- 
 void cmd_msg_cb(int fd, short events, void* arg)
 {
     char cmd[1024];
@@ -92,7 +87,8 @@ void cmd_msg_cb(int fd, short events, void* arg)
         exit(1);
     }
     //最后输入的msg 中含有\n 符 
-    cmd[ret-1] = '\0';    
+    cmd[ret-1] = '\0'; 
+    //加个[]看会不会最后有多出几个字符   
     printf("read msg: [%s]\n", cmd);
  
     struct bufferevent* bev = (struct bufferevent*)arg;
@@ -102,6 +98,7 @@ void cmd_msg_cb(int fd, short events, void* arg)
 
     int len = mr.ByteSize();
     memcpy(msg, "FBEB", 4);
+    //发送的消息，用于测试异常处理
     if( strcmp(cmd, "exception_test")==0 )
     {
          *(u16*)(msg + 4) = 2;

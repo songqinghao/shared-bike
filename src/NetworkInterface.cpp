@@ -21,7 +21,30 @@ NetworkInterface::NetworkInterface()
     base_ = nullptr;
     listener_ = nullptr; 
 }
+void session_reset(ConnectSession* cs)
+{
+    if(cs)
+    {
+        if(cs->read_buf)
+        {
+            delete[] cs->read_buf;
+            cs->read_buf = NULL;
+        }
+        if(cs->write_buf)
+        {
+            delete[] cs->write_buf;
+            cs->write_buf = NULL;
+        }
+        cs->session_stat = SESSION_STATUS::SS_REQUEST;//会话状态改成继续接收请求
+        cs->req_stat = MESSAGE_STATUS::MS_READ_HEADER;
 
+        cs->message_len = 0;
+        cs->read_message_len = 0;
+        cs->read_header_len = 0;
+
+    }
+
+}
 NetworkInterface::~NetworkInterface()
 {
     close();
@@ -105,7 +128,8 @@ void  NetworkInterface::listener_cb(struct evconnlistener* listener, evutil_sock
     //允许读且是持久型的读取
     bufferevent_enable(bev, EV_READ | EV_PERSIST);
     //超时值应设置在配置文件
-    bufferevent_settimeout(bev, 10, 10);
+    //超时时间为10s，如果连接10s还没有数据来，写数据10s还没动作都是回调handle_error
+    bufferevent_settimeout(bev, 10, 10);//超时值应设置在配置文件中
 }
 
 void NetworkInterface::handle_request(struct bufferevent* bev,void* arg)
@@ -207,10 +231,33 @@ void NetworkInterface::handle_response(struct bufferevent* bev, void* arg)
     LOG_DEBUG("NetworkInterface::handle_response.......\n");
 }
 
+//超时+连接关闭+读写出错都是调用handle_error
 void NetworkInterface::handle_error(struct bufferevent* bev, short event, void* arg)
 {
+    ConnectSession* cs = (ConnectSession*)arg;
     LOG_DEBUG("NetworkInterface::handle_error.......\n");
+    //如果连接关闭
+    if(event & BEV_EVENT_EOF)
+    {
+        LOG_DEBUG("connection close............\n");
+    }
+    //读超时
+    else if((event & BEV_EVENT_TIMEOUT)&& (event & BEV_EVENT_READING))
+    {
+        LOG_WARN("NetworkInterface::reading timeout......\n");
+    }
+    //写超时（写数据出去，但是因为网络问题不能写出去或系统内部出问题）
+    else if((event & BEV_EVENT_TIMEOUT)&& (event & BEV_EVENT_WRITING))
+    {
+        LOG_WARN("NetworkInterface::writing timeout......\n");
+    }
+    else if(event & BEV_EVENT_ERROR)
+    {
+        LOG_ERROR("NetworkInterface::Error .....\n");
+    }
 
+    bufferevent_free(bev);
+    session_free(cs);
 }
 //网络事件派发
 void NetworkInterface::network_dispatch()
@@ -234,8 +281,11 @@ void NetworkInterface::send_response_message(ConnectSession* cs)
 
         session_free(cs);
     }
+    //如果响应不为空
     else
     {
-
+        bufferevent_write(cs->bev, cs->write_buf, cs->message_len + MESSAGE_HEADER_LEN);
+        //将cs重置
+        session_reset(cs);
     }
 }

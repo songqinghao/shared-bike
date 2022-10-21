@@ -1,12 +1,15 @@
 #ifndef _GLO_DEF_H_
 #define _GLO_DEF_H_
+
+#include "Logger.h"
+
 #ifdef __cpluscplus
 extern "C"{
 #endif 
 
-#define LOG_DEBUG printf
-#define LOG_WARN printf
-#define LOG_ERROR printf
+// #define LOG_DEBUG printf
+// #define LOG_WARN printf
+// #define LOG_ERROR printf
 //最大消息长度
 #define MAX_MESSAGE_LEN 102400
 

@@ -59,5 +59,46 @@ class ExitRspEv:public iEvent
         }
 };
 
+//登录请求
+class LoginReqEv : public iEvent
+{
+public:
+	LoginReqEv(const std::string& mobile, i32 icode) :
+		iEvent(EEVENTID_LOGIN_REQ, iEvent::generateSeqNo()) {
+		msg_.set_mobile(mobile);
+		msg_.set_icode(icode);
+	}
 
+	const std::string& get_mobile() { return msg_.mobile(); };
+	const i32 get_icode() { return msg_.icode(); };
+
+	virtual std::ostream& dump(std::ostream& out) const;
+	virtual i32 ByteSize() { return msg_.ByteSize(); };
+	virtual bool SerializeToArray(char* buf, int len) { return msg_.SerializeToArray(buf, len); };
+
+private:
+	tutorial::login_request msg_;
+};
+
+//登录响应
+class LoginResEv : public iEvent
+{
+    public:
+        LoginResEv(i32 code) :
+            iEvent(EEVENTID_LOGIN_RSP, iEvent::generateSeqNo()) {
+            msg_.set_code(code);
+            msg_.set_desc(getReasonByErrorCode(code));
+        }
+
+
+        const i32 get_code() { return msg_.code(); };
+        const std::string& get_desc() { return msg_.desc(); };
+
+        virtual std::ostream& dump(std::ostream& out) const;
+        virtual i32 ByteSize() { return msg_.ByteSize(); };
+        virtual bool SerializeToArray(char* buf, int len) { return msg_.SerializeToArray(buf, len); };
+
+    private:
+        tutorial::login_response msg_;
+};
 #endif

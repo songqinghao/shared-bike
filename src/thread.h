@@ -18,8 +18,8 @@ extern "C"{
 typedef intptr_t        int_t;
 typedef uintptr_t       uint_t;
 
-#define  OK          0
-#define  ERROR      -1
+#define  T_OK          0
+#define  T_ERROR      -1
 
 
 //互斥量

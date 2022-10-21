@@ -47,9 +47,10 @@ iEvent* UserEventHandler::handle(const iEvent* ev)
 		//返回手机验证码响应
 		return handle_mobile_code_req((MobileCodeReqEv*)ev);
 	}
+	//登录请求事件来了
 	else if (eid == EEVENTID_LOGIN_REQ)
 	{
-		//return handle_login_req((LoginReqEv*) ev);
+		return handle_login_req((LoginReqEv*) ev);
 	}
 	else if (eid == EEVENTID_RECHARGE_REQ)
 	{
@@ -97,4 +98,24 @@ i32 UserEventHandler::code_gen()
 	return code;
 }
 
+LoginResEv* UserEventHandler::handle_login_req(LoginReqEv* ev)
+{
+	LoginResEv* loginResEv;
+	//验证手机验证码是否正确
+	std::string mobile = ev->get_mobile();//获取手机号
+	i32 code = ev->get_icode();//获取验证码
+	thread_mutex_lock(&pm_);
+	auto iter = m2c_.find(mobile);
+	//没找到手机号，或者验证码错误
+	if (((iter != m2c_.end()) && (code != iter->second))
+		|| (iter == m2c_.end()))
+	{
+		loginResEv = new LoginResEv(ERRC_INVALID_DATA);
+	}
 
+	thread_mutex_unlock(&pm_);
+	if(loginResEv) return loginResEv;
+	//如果验证成功，则判断数据库中是否存在该手机号，如果不存在那么就插入
+	
+
+}

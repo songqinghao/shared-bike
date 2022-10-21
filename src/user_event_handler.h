@@ -18,7 +18,7 @@ public:
 private:
     //处理手机验证码的请求，返回的是手机验证码请求事件
     MobileCodeRspEv* handle_mobile_code_req(MobileCodeReqEv* ev);
-    //LoginResEv* handle_login_req(LoginReqEv* ev);
+    LoginResEv* handle_login_req(LoginReqEv* ev);
     
     //产生验证码方法
     i32 code_gen();

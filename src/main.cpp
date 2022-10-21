@@ -1,32 +1,50 @@
 #include <iostream>
 #include <unistd.h>
+#include <memory>
 #include "bike.pb.h"
 #include "ievent.h"
 #include "events_def.h"
 #include "user_event_handler.h"
 #include "DispatchMsgService.h"
 #include "NetworkInterface.h"
+#include "iniconfig.h"
+#include "Logger.h"
+#include "sqlconnection.h"
+#include "BusProcessor.h"
+
 using namespace std;
-int main()
+
+int main(int argc,char** argv)
 {
-    //创建一个消息请求
-    tutorial::mobile_request msg;
-    //对msg初始化
-    msg.set_mobile("13559851513");
-    //创建一个短信请求事件，
-    iEvent *ie = new iEvent(EEVENTID_GET_MOBILE_CODE_REQ, 2);
-    //创建短信请求事件，直接进行初始化，sn产生
-    MobileCodeReqEv me("1359851511");
-    //输出me的mobile
-    me.dump(cout);
-    cout << endl << msg.mobile() << endl;
+    if (argc != 3) {
+		printf("Please input shbk <conifg file path> <log file config>!\n");
+		return -1;
+	}
 
-    //创建短信回应事件，响应正确，并且返回验证码为666666
-    MobileCodeRspEv mcre(200, 666666);
-    mcre.dump(cout);
+    if (!Logger::instance()->init(std::string(argv[2])))
+	{
+		fprintf(stderr, "init log module failed.\n");
+		return -2;
+	}
 
-    UserEventHandler uehl;
-    //uehl.handle(&me);
+
+	Iniconfig *config = Iniconfig::getInstance();
+	if (!config->loadfile(std::string(argv[1])))
+	{
+		LOG_ERROR("load %s failed.", argv[1]);
+		Logger::instance()->GetHandle()->error("load %s failed.", argv[1]);
+		return -3;
+	}
+
+    st_env_config conf_args = config->getconfig();
+	LOG_INFO("[database] ip: %s port：%d user: %s  pwd: %s db: %s  [server] port: %d\n", conf_args.db_ip.c_str(), conf_args.db_port, \
+		conf_args.db_user.c_str(), conf_args.db_pwd.c_str(), conf_args.db_name.c_str(), conf_args.svr_port);
+        
+    std::shared_ptr<MysqlConnection>mysqlconn(new MysqlConnection);
+    BusinessProcessor busPro(mysqlconn);
+
+
+
     DispatchMsgService*DMS = DispatchMsgService::getInstance();
     DMS->open();//单例模式open
 
@@ -38,7 +56,7 @@ int main()
         NTIF->network_dispatch();
         //1s钟执行一次
         sleep(1);
-        std::cout << "NetworkInterface_dispatch....." << std::endl;
+        LOG_DEBUG("network_event_dispatch ...\n");
     }
     //创建一个请求事件
     /*

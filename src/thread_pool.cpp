@@ -29,12 +29,12 @@ thread_pool_t* thread_pool_init()
 
     thread_pool_queue_init(&tp->queue);
 
-    if (thread_mutex_create(&tp->mtx) != OK) {
+    if (thread_mutex_create(&tp->mtx) != T_OK) {
 		free(tp);
         return NULL;
     }
 
-    if (thread_cond_create(&tp->cond) != OK) {
+    if (thread_cond_create(&tp->cond) != T_OK) {
         (void) thread_mutex_destroy(&tp->mtx);
 		free(tp);
         return NULL;
@@ -85,7 +85,7 @@ void thread_pool_destroy(thread_pool_t *tp)
     for (n = 0; n < tp->threads; n++) {
         lock = 1;
 
-        if (thread_task_post(tp, &task) != OK) {
+        if (thread_task_post(tp, &task) != T_OK) {
             return;
         }
 
@@ -143,8 +143,8 @@ void thread_task_free(thread_task_t* task)
 int_t
 thread_task_post(thread_pool_t *tp, thread_task_t *task)
 {
-    if (thread_mutex_lock(&tp->mtx) != OK) {//线程池上锁
-        return ERROR;
+    if (thread_mutex_lock(&tp->mtx) != T_OK) {//线程池上锁
+        return T_ERROR;
     }
     //正在等待的任务数量已经达到最大，报错
     if (tp->waiting >= tp->max_queue) {
@@ -152,7 +152,7 @@ thread_task_post(thread_pool_t *tp, thread_task_t *task)
 
         fprintf(stderr,"thread pool \"%s\" queue overflow: %ld tasks waiting\n",
                       tp->name, tp->waiting);
-        return ERROR;
+        return T_ERROR;
     }
 
     //task->event.active = 1;
@@ -161,9 +161,9 @@ thread_task_post(thread_pool_t *tp, thread_task_t *task)
     task->next = NULL;
 
     //发送信号（用于同步互斥）
-    if (thread_cond_signal(&tp->cond) != OK) {
+    if (thread_cond_signal(&tp->cond) != T_OK) {
         (void) thread_mutex_unlock(&tp->mtx);
-        return ERROR;
+        return T_ERROR;
     }
 
     //调整线程池的队列
@@ -177,7 +177,7 @@ thread_task_post(thread_pool_t *tp, thread_task_t *task)
     if(debug)fprintf(stderr,"task #%lu added to thread pool \"%s\"\n",
                    task->id, tp->name);
 
-    return OK;
+    return T_OK;
 }
 
 
@@ -195,7 +195,7 @@ thread_pool_cycle(void *data)
    
 
     for ( ;; ) {
-        if (thread_mutex_lock(&tp->mtx) != OK) {//上锁
+        if (thread_mutex_lock(&tp->mtx) != T_OK) {//上锁
             return NULL;
         }
 
@@ -204,7 +204,7 @@ thread_pool_cycle(void *data)
 
         while (tp->queue.first == NULL) {//没有任务可以做
             if (thread_cond_wait(&tp->cond, &tp->mtx)//挂起，等任务进来再唤醒
-                != OK)
+                != T_OK)
             {
                 (void) thread_mutex_unlock(&tp->mtx);
                 return NULL;
@@ -218,7 +218,7 @@ thread_pool_cycle(void *data)
             tp->queue.last = &tp->queue.first;
         }
 		
-        if (thread_mutex_unlock(&tp->mtx) != OK) {
+        if (thread_mutex_unlock(&tp->mtx) != T_OK) {
             return NULL;
         }
 
@@ -256,10 +256,10 @@ thread_pool_init_default(thread_pool_t *tpp, char *name)
                       "thread_pool_init, name: %s ,threads: %lu max_queue: %ld\n",
                       tpp->name, tpp->threads, tpp->max_queue);
 
-        return OK;
+        return T_OK;
     }
 
-    return ERROR;
+    return T_ERROR;
 }
 
 
