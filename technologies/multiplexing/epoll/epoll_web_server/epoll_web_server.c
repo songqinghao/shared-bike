@@ -92,27 +92,38 @@ int main(int argc, char *argv[])
 		usage(argv[0]);
 		exit(1);
 	}
-
-	int listen_sock = startup(argv[1], atoi(argv[2]));      //创建一个绑定了本地 ip 和端口号的套接字描述符
+	//创建一个绑定了本地ip和端口号的套接字描述符
+	int listen_sock = startup(argv[1], atoi(argv[2]));      
 
 
 	//1.创建epoll    
-	epfd = epoll_create(256);    //可处理的最大句柄数256个
+	epfd = epoll_create(256);    //可处理的最大句柄数256个（其实在很多操作系统中这个限制都无效了）
 	if (epfd < 0)
 	{
 		perror("epoll_create");
 		exit(5);
 	}
+	/*
+	struct epoll_event{
+	__uint32_t  events;
+	epoll_data_t data;//上下文，其他东西
+	}
 
-	struct epoll_event _ev;       //epoll结构填充 
+	typedef union epoll_data{
+		void *ptr;//上下文的数据
+		int fd;//文件句柄
+		uint32_t u32;
+		uint64_t u64;
+	}epoll_data_t
+	*/
+	struct epoll_event _ev;       //epoll结构填充 ，创建事件
 	ConnectStat * stat = stat_init(listen_sock);
 	_ev.events = EPOLLIN;         //初始关心事件为读，请求客户端进行连接
-	_ev.data.ptr = stat;
-	//_ev.data.fd = listen_sock;
+	_ev.data.ptr = stat;		  //将ev中的指针指向连接状态
 
 	//2.托管
 	epoll_ctl(epfd, EPOLL_CTL_ADD, listen_sock, &_ev);  //将listen sock添加到epfd中，关心读事件
-	//64可表示为同时接收 的事件最大数目
+	//64可表示为同时接收的事件最大数目
 	struct epoll_event revs[64];
 
 	int timeout = -1;
@@ -122,7 +133,7 @@ int main(int argc, char *argv[])
 	while (!done)
 	{
 		//epoll_wait()相当于在检测事件
-		switch ((num = epoll_wait(epfd, revs, 64, timeout)))  //返回需要处理的事件数目  64表示返回事件最大有多大
+		switch ((num = epoll_wait(epfd, revs, 64, timeout)))  //返回需要处理的事件数目，64表示返回事件接收的最大数量
 		{
 		case 0:                  //返回0 ，表示监听超时
 			printf("timeout\n");
@@ -138,11 +149,14 @@ int main(int argc, char *argv[])
 			int i;
 			for (i = 0; i < num; i++)//num为已经就绪的事件
 			{
+				//就绪的事件也会保存到revs中
 				ConnectStat * stat = (ConnectStat *)revs[i].data.ptr;//拿到客户端连接状态，拿到stat
-
-				int rsock = stat->fd; //准确获取哪个事件的描述符
-				if (rsock == listen_sock && (revs[i].events) && EPOLLIN) //如果是初始的，就接受，建立链接
+				//准确获取哪个事件的描述符
+				int rsock = stat->fd; 
+				//如果是请求连接
+				if (rsock == listen_sock && (revs[i].events) && EPOLLIN)
 				{
+					//保存客户端的fd
 					int new_fd = accept(listen_sock, (struct sockaddr*)&peer, &len);
 
 					//得到一个新ip
@@ -272,7 +286,6 @@ void do_http_request(ConnectStat * stat) {
 		}
 
 		//生成处理结果 html ,write
-
 		stat->_ev.events = EPOLLOUT;
 		//stat->_ev.data.ptr = stat;
 		epoll_ctl(epfd, EPOLL_CTL_MOD, stat->fd, &stat->_ev);    //二次托管

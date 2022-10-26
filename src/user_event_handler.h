@@ -6,6 +6,7 @@
 #include "events_def.h"
 #include "thread_pool.h"
 #include "thread.h"
+#include "iniconfig.h"
 //具体用户处理事件的类，继承自事件处理类
 class UserEventHandler : public iEventHandler
 {

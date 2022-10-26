@@ -66,18 +66,19 @@ void DispatchMsgService::svc(void* argv)
         //iEvent* rsp = 
         iEvent* rsp = dms->process(ev);
         //将rsp放到响应队列中去
+        printf("process success!!,eid:%u\n",ev->get_eid());
         if(rsp)
         {
+            printf("DispatchMsgService::svc not empty rsp eid:%u\n",rsp->get_eid());
             //打印rsp的信息
             rsp->dump(std::cout);
+            printf("DispatchMsgService::svc dump success!!\n");
             //将会话再次进行记录（args就是cs）
-            rsp->set_args(ev->get_args());
-
-
-
+            rsp->set_args(ev->get_args()); 
         }
         else
         {
+            printf("DispatchMsgService::svc empty! \n");
             LOG_WARN("DispatchMsgService::svc rsp is nullptr\n");
             //创建一个中止响应传到队列里面去
             rsp = new ExitRspEv();
@@ -133,6 +134,7 @@ void DispatchMsgService::subscribe(u32 eid, iEventHandler* handler)
         {
             //如果没有存在，则加到后面（一个事件可以由多个事件处理器进行处理）
             iter->second.push_back(handler);
+            printf("DispatchMsgService::subscribe eid:%u handle追加\n",eid);
         }
     }
     else
@@ -181,7 +183,7 @@ iEvent* DispatchMsgService::process(const iEvent* ev)
         LOG_WARN("DispatchMsgService : no any event handler subscribed %d", eid);
         return NULL;
     }
-
+    std::cout<<"eid: "<<eid<<"已经订阅了！！"<<std::endl;
     //存在有事件处理器
     iEvent* rsp = NULL;
     //将事件的所有处理函数全部都处理一遍
@@ -193,7 +195,7 @@ iEvent* DispatchMsgService::process(const iEvent* ev)
         //返回一个响应事件
         rsp = handler->handle(ev);//推荐使用vector 或list 返回多个rsp (在这里应该就是只有一个rsp)
     }
-
+    std::cout<<"eid: "<<eid<<"处理完了！！"<<"rsp eid："<<rsp->get_eid()<<std::endl;
     //这里的代码有瑕疵，应该是返回一整个队列，这里只返回了最后一个回调函数的返回，只是在当前场景不会出现多个订阅者，所以不会出现泄漏
     //后期进行修改.......................
     return rsp;
@@ -225,7 +227,16 @@ iEvent* DispatchMsgService::parseEvent(const char* messages,u32 len, u32 eid)
     //如果是请求登录的eid
     else if(eid == EEVENTID_LOGIN_REQ)
     {
-            
+        printf("DispatchMsgService::parseEvent eid==EEVENTID_LOGIN_REQ\n");
+        tutorial::login_request lr;
+        if(lr.ParseFromArray(messages,len))
+        {
+            //创建登录请求事件
+            LoginReqEv* ev = new LoginReqEv(lr.mobile(),lr.icode());
+            //printf("DispatchMsgService::parseEvent Create LoginReqEv success mobile %s,icode %d\n",lr.mobile(),lr.icode());
+            std::cout<<"DispatchMsgService::parseEvent Create LoginReqEv success mobile "<<lr.mobile()<<" ,icode "<<lr.icode()<<std::endl;
+            return ev;
+        }
     } 
 
     return nullptr;
@@ -235,7 +246,7 @@ iEvent* DispatchMsgService::parseEvent(const char* messages,u32 len, u32 eid)
 void DispatchMsgService::handleAllResponseEvent(NetworkInterface* interface)
 {
     bool done = false;
-    if(!done)
+    while(!done)
     {
         iEvent* ev = nullptr;
         //拿数据还是要用互斥锁
@@ -277,10 +288,35 @@ void DispatchMsgService::handleAllResponseEvent(NetworkInterface* interface)
                 mcre->SerializeToArray(cs->write_buf+MESSAGE_HEADER_LEN, cs->message_len);
                 interface->send_response_message(cs);
            
-            }else if(ev->get_eid() == EEVENTID_EXIT_RSP)
+            }
+            else if(ev->get_eid() == EEVENTID_EXIT_RSP)
             {
                 ConnectSession*cs = (ConnectSession*)ev->get_args();
                 cs->response = ev;
+                interface->send_response_message(cs);
+            }
+            //如果是登录响应的eid
+            else if (ev->get_eid() == EEVENTID_LOGIN_RSP)
+            {
+                printf("DispatchMsgService::handleAllResponseEvent: eid=EEVENTID_LOGIN_RSP\n");
+                //LoginResEv* lgre = static_cast<LoginResEv*>(ev);
+                LOG_DEBUG("DispatchMsgService::handleAllResponseEvent - id：EEVENTID_LOGIN_RSP\n");
+
+                ConnectSession* cs = (ConnectSession*)ev->get_args();
+                cs->response = ev;
+
+                //系列化请求数据
+                //cs->message_len = lgre->ByteSize();
+                cs->message_len = ev->ByteSize();
+                cs->write_buf = new char[cs->message_len + MESSAGE_HEADER_LEN];
+
+                //组装头部
+                memcpy(cs->write_buf, MESSAGE_HEADER_ID, 4);
+                *(u16*)(cs->write_buf + 4) = EEVENTID_LOGIN_RSP;
+                *(i32*)(cs->write_buf + 6) = cs->message_len;
+
+                ev->SerializeToArray(cs->write_buf + MESSAGE_HEADER_LEN, cs->message_len);
+
                 interface->send_response_message(cs);
             }
         }

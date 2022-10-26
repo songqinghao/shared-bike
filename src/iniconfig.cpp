@@ -13,6 +13,7 @@ Iniconfig::~Iniconfig()
 
 }
 
+//单例
 Iniconfig* Iniconfig::getInstance() {
 	if (config == nullptr) {
 		config = new Iniconfig();

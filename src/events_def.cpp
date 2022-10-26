@@ -24,6 +24,13 @@ std::ostream& LoginResEv::dump(std::ostream& out) const
 	out << "LoginResEv sn =" << get_sn() << ",";
 	out << "code=" << msg_.code() << std::endl;
 	out << "describle = " << msg_.desc() << std::endl;
+    printf("LoginResEv::dump success!!\n");
+	return out;
+}
+std::ostream& LoginReqEv::dump(std::ostream& out) const
+{
+	out << "LoginReqEv sn =" << get_sn() << ",";
+	out << "icode=" << msg_.icode() << std::endl;
 
 	return out;
 }

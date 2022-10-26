@@ -27,7 +27,7 @@ int main(int argc,char** argv)
 		return -2;
 	}
 
-
+    //创建单例
 	Iniconfig *config = Iniconfig::getInstance();
 	if (!config->loadfile(std::string(argv[1])))
 	{
@@ -41,8 +41,17 @@ int main(int argc,char** argv)
 		conf_args.db_user.c_str(), conf_args.db_pwd.c_str(), conf_args.db_name.c_str(), conf_args.svr_port);
         
     std::shared_ptr<MysqlConnection>mysqlconn(new MysqlConnection);
+    //数据数据库初始化不成功
+    if (!mysqlconn->Init(conf_args.db_ip.c_str(), conf_args.db_port,
+		conf_args.db_user.c_str(), conf_args.db_pwd.c_str(), conf_args.db_name.c_str()))
+	{
+		LOG_ERROR("Database init failed. exit!\n");
+		return -4;
+	}
+	//这里也会初始化用户处理事件对象（UserEventHandler）
     BusinessProcessor busPro(mysqlconn);
-
+    //初始化表，看存不存在，不存在那么就创建
+    busPro.init();
 
 
     DispatchMsgService*DMS = DispatchMsgService::getInstance();
@@ -50,7 +59,7 @@ int main(int argc,char** argv)
 
     NetworkInterface* NTIF = new NetworkInterface();
     //设置端口号
-    NTIF->start(8888);
+    NTIF->start(conf_args.svr_port);
     while(true)
     {
         NTIF->network_dispatch();

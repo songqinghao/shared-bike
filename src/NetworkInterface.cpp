@@ -129,7 +129,7 @@ void  NetworkInterface::listener_cb(struct evconnlistener* listener, evutil_sock
     bufferevent_enable(bev, EV_READ | EV_PERSIST);
     //超时值应设置在配置文件
     //超时时间为10s，如果连接10s还没有数据来，写数据10s还没动作都是回调handle_error
-    bufferevent_settimeout(bev, 10, 10);//超时值应设置在配置文件中
+    bufferevent_settimeout(bev, 20, 20);//超时值应设置在配置文件中
 }
 
 void NetworkInterface::handle_request(struct bufferevent* bev,void* arg)
@@ -263,7 +263,7 @@ void NetworkInterface::handle_error(struct bufferevent* bev, short event, void* 
 void NetworkInterface::network_dispatch()
 {
     event_base_loop(base_,EVLOOP_NONBLOCK);
-    //处理响应事件，回复响应信息
+    //处理请求事件，回复响应信息
     DispatchMsgService::getInstance()->handleAllResponseEvent(this);
 }
 

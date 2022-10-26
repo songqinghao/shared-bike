@@ -41,8 +41,6 @@ bool MysqlConnection::Init(const char* szHost, int nPort, const char* szUser, co
         return false;
     }
 
-    //应该移到mysql_real_connect之前
-
     return true;
 }
 
