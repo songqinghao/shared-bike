@@ -12,6 +12,7 @@ Logger Logger::instance_;
 bool  Logger::init(const std::string& log_conf_file)
 {
 	try{
+		//属性设置
 		log4cpp::PropertyConfigurator::configure(log_conf_file);		
 	}catch(log4cpp::ConfigureFailure& f)
 	{
@@ -19,7 +20,7 @@ bool  Logger::init(const std::string& log_conf_file)
         return false;
 
 	}
-	
+	//log4cpp::Category* category_;
 	category_ = &log4cpp::Category::getRoot();
 	return true;
 }

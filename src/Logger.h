@@ -7,6 +7,7 @@
 class Logger
 {
 public:
+	//传log的配置文件
 	bool init(const std::string& log_conf_file);
 	static Logger* instance()
 	{
@@ -20,7 +21,9 @@ public:
 	
 	
 protected:
+	//单例
 	static Logger instance_;
+	//利用category输出日志
 	log4cpp::Category* category_;
 };
 
