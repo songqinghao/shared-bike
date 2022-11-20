@@ -8,3 +8,4 @@
 - threadpoll文件夹：内存池的设计与应用（手写内存池）
 - udpCom文件夹：udp通信的应用
 - sharemem文件夹：共享内存的使用（System V版本的共享内存shmm+内存映射mmap）
+- mem_pool文件夹：内存池的设计与实现
