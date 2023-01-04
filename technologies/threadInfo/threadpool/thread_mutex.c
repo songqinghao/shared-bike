@@ -14,7 +14,7 @@ thread_mutex_create(pthread_mutex_t *mtx)
         return ERROR;
     }
     /*设置属性，PTHREAD_MUTEX_ERRORCHECK是检错锁，
-    如果一个线程请求同一个锁则返回edeadlk，
+    如果同一个线程请求同一个锁则返回edeadlk，
     否则与pthread_mutex_timed_np类型动作相同，这样防止死锁
     ------------------------------
     pthread_mutex_timed_np是缺省锁，也就是普通锁，

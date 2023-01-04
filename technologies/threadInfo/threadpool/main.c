@@ -43,17 +43,12 @@ main(int argc, char **argv)
    //改变参数
    ((struct test*)test3->ctx)->arg1 = 666;
    ((struct test*)test3->ctx)->arg2 = 888;
-   //for(i=0; i<10;i++){ 
    //进行任务投递
    thread_task_post(tp, test1);
    thread_task_post(tp, test2);
    thread_task_post(tp, test3);
-   //}
    sleep(10);
    thread_pool_destroy(tp);//将线程池销毁
-   
-    
-	
 }
 
 

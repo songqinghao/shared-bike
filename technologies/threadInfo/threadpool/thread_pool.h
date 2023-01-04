@@ -37,8 +37,8 @@ struct thread_pool_s {
     pthread_cond_t         cond;
 
     char                  *name;
-    uint_t                threads;
-    int_t                 max_queue;
+    uint_t                threads;//线程池中线程的数目
+    int_t                 max_queue;//队列的长度
 };
 
 thread_task_t *thread_task_alloc(size_t size);
